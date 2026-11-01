@@ -53,9 +53,9 @@ button{font:inherit;color:var(--ink);}
   text-shadow:3px 0 var(--paper),-3px 0 var(--paper),0 3px var(--paper),0 -3px var(--paper),2px 2px var(--paper),-2px -2px var(--paper),2px -2px var(--paper),-2px 2px var(--paper),6px 7px 0 var(--shadow);}
 .logo span{display:block;color:var(--blue);padding-left:.5em;}
 .byline{display:inline-block;margin:.9em 0 1em;padding:.15em .6em;background:var(--paper);border-radius:14px 18px 12px 20px;font:400 clamp(20px,2.4vw,26px)/1.2 var(--hand);box-shadow:2px 3px 0 var(--shadow);}
-.levels{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:18px;}
+.levels{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:18px;max-width:430px;}
 .levels .lab{font:400 24px var(--hand);background:var(--paper);padding:0 .45em;border-radius:10px;}
-.lvl{position:relative;width:60px;height:60px;padding:0;font:800 30px/1 var(--display);background:var(--paper);border:3px solid var(--blue);border-radius:50% 46% 52% 48%/48% 52% 46% 50%;box-shadow:2px 3px 0 var(--shadow);cursor:pointer;touch-action:manipulation;}
+.lvl{position:relative;width:52px;height:52px;padding:0;font:800 25px/1 var(--display);background:var(--paper);border:3px solid var(--blue);border-radius:50% 46% 52% 48%/48% 52% 46% 50%;box-shadow:2px 3px 0 var(--shadow);cursor:pointer;touch-action:manipulation;}
 .lvl:active{transform:translate(1px,2px);box-shadow:1px 1px 0 var(--shadow);}
 .lvl.done::after{content:"";position:absolute;right:-6px;top:-6px;width:22px;height:22px;border-radius:50%;background:var(--yellow) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%232b2230' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat;border:2px solid var(--ink);}
 .hints{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
@@ -116,7 +116,11 @@ button{font:inherit;color:var(--ink);}
 .card p{margin:.25em 0 .5em;font:400 clamp(22px,3vw,30px)/1.3 var(--hand);text-wrap:balance;}
 .row{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:14px;}
 .beesrow{display:flex;flex-wrap:wrap;justify-content:center;gap:0;margin:4px 0 6px;}
-.beesrow img{width:42px;height:42px;animation:bob 1.1s ease-in-out infinite alternate;}
+.beesrow img{width:34px;height:34px;animation:bob 1.1s ease-in-out infinite alternate;}
+.beesrow img.miss{opacity:.22;filter:grayscale(1);animation:none;}
+.card .score{margin:.1em 0 .15em;font:800 clamp(32px,5vw,50px)/1.1 var(--display);color:var(--ink);}
+.card .score b{color:var(--red);}
+#doneText:empty{display:none;}
 .beesrow img:nth-child(even){animation-delay:-.55s;}
 .beesrow .more{font:800 26px/42px var(--display);margin-left:6px;}
 @keyframes bob{to{transform:translateY(-6px) rotate(6deg);}}
@@ -179,11 +183,7 @@ button{font:inherit;color:var(--ink);}
         <h1 class="logo">Bierne <span>i Paris</span></h1>
         <div class="byline">Et spil af Felicia, 5 år</div>
         <div><button id="playBtn" class="btn big">Spil ▸</button></div>
-        <div class="levels"><span class="lab">Bane</span>
-          <button class="lvl" data-l="1" aria-label="Bane 1">1</button>
-          <button class="lvl" data-l="2" aria-label="Bane 2">2</button>
-          <button class="lvl" data-l="3" aria-label="Bane 3">3</button>
-        </div>
+        <div class="levels" id="levels"><span class="lab">Bane</span></div>
         <div class="hints">
           <span><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#2b2230" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5" stroke="#d83a3f" stroke-dasharray="3 3"/><path d="M12 8v9.5M9 14l3 4 3-4" /></svg>Tryk på skærmen: hop</span>
           <span><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#2b2230" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Pilen: vend om</span>
@@ -232,8 +232,9 @@ button{font:inherit;color:var(--ink);}
   <section id="done" class="screen dim" hidden>
     <div class="card">
       <h2 id="doneTitle">Bane 1 klaret!</h2>
-      <p id="doneText"></p>
+      <p id="doneScore" class="score"></p>
       <div id="doneBees" class="beesrow"></div>
+      <p id="doneText"></p>
       <div class="row">
         <button id="nextBtn" class="btn big">Næste bane ▸</button>
       </div>
@@ -590,37 +591,61 @@ function renderB(b,k){
 }
 
 /* ---------- levels ---------- */
-const row=(x,n,step,h,ty='sh')=>Array.from({length:n},(_,i)=>[x+i*step,h,ty[i%ty.length]]);
-const arc=(x,n,step,hm)=>Array.from({length:n},(_,i)=>[x+i*step,60+(hm-60)*Math.sin(Math.PI*(i+.5)/n),i%2?'h':'s']);
-const LEVELS=[
-  {len:3600,tip:'Saml bierne, og hop over fjenderne!',
-   bees:[...row(380,3,70,40),[820,150,'h'],...arc(1250,5,60,170),...row(2080,2,90,40),[2700,150,'h'],[2770,150,'s'],...row(3130,3,70,40)],
-   enemies:[['bug',1000,90],['bug',1800,110],['bug',2420,90],['bug',2990,80]],talls:[],tricks:[]},
-  {len:4400,tip:'Pas på snyderbien med de lange følehorn!',
-   bees:[...row(360,3,70,40),...arc(1000,5,60,170),[1350,40,'s'],[1560,40,'h'],[2060,40,'s'],[2130,150,'h'],...row(2950,3,70,40),[3700,150,'h'],[3780,40,'s'],[4080,40,'h']],
-   enemies:[['bug',760,90],['mask',1820,110],['bug',2370,90],['mask',2720,110],['bug',3460,90],['mask',3930,60]],talls:[],tricks:[1455,3200]},
-  {len:5200,tip:'Gå ind i benet på den høje, så vælter den!',
-   bees:[...row(360,3,70,40),...arc(1300,5,60,170),[1620,40,'s'],[1790,40,'h'],[2620,150,'h'],[3480,40,'s'],[3640,40,'h'],[4440,150,'h'],[4510,150,'s'],[4600,40,'h'],[4840,40,'s']],
-   enemies:[['bug',1060,90],['mask',2010,100],['bug',2680,90],['mask',3250,100],['bug',4230,90],['mask',4700,50]],talls:[760,2330,3900],tricks:[1705,2950,3560]},
-];
-const TOWER_C=[[0,.25],[.25,.55],[.55,1]];
+const LAST=10;
+const TIPS=['Saml bierne, og hop over fjenderne!','Hop oven på en fjende, så redder du en bi!','Pas på figuren med masken!','Pas på snyderbien med de lange følehorn!','Gå ind i benet på den høje, så vælter den!','Eiffeltårnet kommer tættere på!','Hvor mange bier kan du redde?','Flere fjender nu. Hop godt!','Næsten fremme ved Eiffeltårnet!','Sidste bane! Eiffeltårnet venter.'];
+function buildLevel(n){
+  const r=mulberry(n*104729+7), len=3400+n*180, hive=len-180, bees=[], enemies=[], talls=[], tricks=[];
+  const ok={mask:n>=3,trick:n>=4,tall:n>=5}, pEnemy=Math.min(.58,.3+.03*(n-1)), SW=300, slots=[];
+  for(let x=380;x+SW<hive-150;x+=SW) slots.push(x);
+  const isEnemy=k=>k==='bug'||k==='mask'||k==='tall'||k==='trick', kinds=[];
+  let prev=false;
+  for(let i=0;i<slots.length;i++){
+    let k;
+    if(i===0) k='row';
+    else if(!(prev&&(n<6||r()<.5))&&r()<pEnemy){const pl=['bug','bug'];if(ok.mask)pl.push('mask','mask');if(ok.trick)pl.push('trick');if(ok.tall)pl.push('tall');k=pick(r,pl);}
+    else k=pick(r,['row','high','arc','row']);
+    kinds.push(k); prev=isEnemy(k);
+  }
+  const pool=['bug','bug'];if(ok.mask)pool.push('mask','mask');if(ok.trick)pool.push('trick');if(ok.tall)pool.push('tall');
+  const minE=Math.min(Math.floor(slots.length/2),2+Math.floor(n/2));
+  for(let guard=0;kinds.filter(isEnemy).length<minE&&guard<60;guard++){
+    const free=kinds.map((k,i)=>i).filter(i=>i>1&&!isEnemy(kinds[i])&&(n>=6||(!isEnemy(kinds[i-1]||'')&&!isEnemy(kinds[i+1]||''))));
+    if(!free.length) break; kinds[pick(r,free)]=pick(r,pool);
+  }
+  const need=['bug'];if(ok.mask)need.push('mask');if(ok.trick)need.push('trick');if(ok.tall)need.push('tall');
+  for(const t of need){if(kinds.includes(t))continue;
+    const cnt=k=>kinds.filter(x=>x===k).length, donors=kinds.map((k,i)=>i).filter(i=>isEnemy(kinds[i])&&cnt(kinds[i])>1);
+    if(donors.length) kinds[pick(r,donors)]=t;}
+  slots.forEach((sx,i)=>{const k=kinds[i];
+    if(k==='row') [60,130,200].forEach((o,j)=>bees.push([sx+o,40,j%2?'h':'s']));
+    else if(k==='high') bees.push([sx+110,150,'h'],[sx+180,150,'s']);
+    else if(k==='arc') for(let j=0;j<5;j++) bees.push([sx+30+j*55,60+110*Math.sin(Math.PI*(j+.5)/5),j%2?'h':'s']);
+    else if(k==='bug'||k==='mask'){enemies.push([k,sx+150,60+Math.round(r()*30)]);if(n>=6&&r()<.4)bees.push([sx+150,175,'h']);}
+    else if(k==='tall') talls.push(sx+170);
+    else if(k==='trick'){tricks.push(sx+150);bees.push([sx+30,40,'s'],[sx+270,40,'h']);}
+  });
+  return {len,tip:TIPS[n-1],bees,enemies,talls,tricks,total:bees.length+enemies.length+talls.length};
+}
+const LEVELS=Array.from({length:LAST},(_,i)=>buildLevel(i+1));
+const towerRange=n=>[(n-1)/LAST,n/LAST];
 
 /* ---------- state ---------- */
 let W=0,H=0,dpr=1,S=1,viewW=900,viewH=600,groundY=505,horizonY=380;
 let mode='title', T=0, last=0, level=1, L=3600, hiveX=3420, camX=0, shake=0, levelT=0;
 let hero=null, bees=[], enemies=[], talls=[], tricks=[], parts=[], flyers=[], orbit=[], count=0, scen=null;
 let home={n:0,sent:0,arrived:0}, finT=0, hiveBounce=0, doneShown=false;
-let runCounts=[null,null,null];
+let runCounts=new Array(LAST).fill(null);
 const G=1300, JV=660, SPEED=128, HS=1.15;
 let cview={x:0,y:0}, titleHX=200, titleDir=1;
 
 const SAVE_KEY='bierne-i-paris';
-let save={done:[false,false,false],sound:true,music:true};
+let save={done:[],sound:true,music:true};
 try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(s&&typeof s==='object')save=Object.assign(save,s);}catch(e){}
 function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){}}
 
 /* ---------- sound ---------- */
 const SND={ac:null,on:save.sound!==false,m:null};
+let OHOH_GAIN=.42; // about as loud as the bee "pling", a bit longer
 function audioInit(){
   if(SND.ac){if(SND.ac.state==='suspended')SND.ac.resume().catch(()=>{});return;}
   try{const A=window.AudioContext||window.webkitAudioContext;SND.ac=new A();SND.m=SND.ac.createGain();SND.m.gain.value=.6;SND.m.connect(SND.ac.destination);}catch(e){SND.ac=null;}
@@ -644,6 +669,19 @@ function noise(d,v){
   const src=a.createBufferSource(), g=a.createGain(), fl=a.createBiquadFilter();
   src.buffer=buf; g.gain.value=v; fl.type='lowpass'; fl.frequency.value=500; src.connect(fl); fl.connect(g); g.connect(SND.m); src.start();
 }
+function ohoh(){ // a deep, friendly "oh-oh-oh" made from a vowel-shaped buzz
+  const a=SND.ac; if(!a||!SND.on) return;
+  const t0=a.currentTime+.03, out=a.createGain(); out.gain.value=OHOH_GAIN; out.connect(SND.m);
+  [[190,178,.22],[226,205,.22],[170,132,.42]].forEach(([p1,p2,d],i)=>{
+    const t=t0+i*.3, src=a.createOscillator(), env=a.createGain(), lfo=a.createOscillator(), lg=a.createGain();
+    src.type='sawtooth'; src.frequency.setValueAtTime(p1,t); src.frequency.linearRampToValueAtTime(p2,t+d);
+    lfo.frequency.value=5.5; lg.gain.value=3; lfo.connect(lg); lg.connect(src.frequency);
+    env.gain.setValueAtTime(.0001,t); env.gain.linearRampToValueAtTime(1,t+.045); env.gain.setValueAtTime(1,t+d-.05); env.gain.exponentialRampToValueAtTime(.0001,t+d+.08);
+    src.connect(env);
+    for(const [f,q,g] of [[470,6,1],[820,8,.5],[2450,10,.1]]){const bp=a.createBiquadFilter(),gg=a.createGain();bp.type='bandpass';bp.frequency.value=f;bp.Q.value=q;gg.gain.value=g;env.connect(bp);bp.connect(gg);gg.connect(out);}
+    src.start(t); src.stop(t+d+.12); lfo.start(t); lfo.stop(t+d+.12);
+  });
+}
 function sfx(n,i=0){
   if(!SND.ac||!SND.on) return;
   switch(n){
@@ -656,6 +694,7 @@ function sfx(n,i=0){
     case 'push': tone(300,.25,'triangle',.1,520); break;
     case 'thud': noise(.25,.35); tone(110,.3,'sine',.25,45); break;
     case 'home': tone(784*Math.pow(2,(i%12)/12),.16,'triangle',.13); break;
+    case 'ohoh': ohoh(); break;
     case 'win': [523,659,784,1047].forEach((f,k)=>tone(f,.28,'triangle',.13,null,k*.12)); break;
   }
 }
@@ -724,18 +763,18 @@ const w2v=(x,h)=>({x:x-camX,y:groundY-h});
 
 function genScen(n){
   const r=mulberry(n*7919+13), camEnd=Math.max(0,L-viewW);
-  const near=[], nearLen=camEnd*.6+viewW+260, nearStop=n===3?camEnd*.6+viewW*.18:Infinity;
+  const near=[], nearLen=camEnd*.6+viewW+260, nearStop=n===LAST?camEnd*.6+viewW*.18:Infinity;
   let x=-60;
   while(x<nearLen){
     if(x>nearStop){near.push({kind:'tree',x:x+40,h:120+r()*40,sd:(r()*1000)|0});x+=150+r()*90;continue;}
     const w=170+r()*80; near.push(mkB(r,x,w)); x+=w;
     if(r()<.2&&x<nearStop){near.push({kind:'tree',x:x+30,h:110+r()*30,sd:(r()*1000)|0});x+=60;}
   }
-  const far=[], farEnd=Math.min(camEnd*.25+viewW+200, n===3?camEnd*.25+viewW*.3:Infinity);
+  const far=[], farEnd=Math.min(camEnd*.25+viewW+200, n===LAST?camEnd*.25+viewW*.3:Infinity);
   x=-80; while(x<farEnd){const w=60+r()*110;far.push({x,w,h:30+r()*70,ch:r()<.5});x+=w;}
   const decor=[]; for(let d=260;d<hiveX-200;d+=360+r()*140){decor.push({k:'lamp',x:d});if(r()<.6)decor.push({k:'plant',x:d+120+r()*80,sd:(r()*999)|0});}
   const clouds=[]; for(let i=0;i<6;i++) clouds.push({x:r()*1400,y:50+r()*120,s:.55+r()*.5,sd:i*13+n});
-  scen={near,far,decor,clouds,lawn:n===3};
+  scen={near,far,decor,clouds,lawn:n===LAST};
 }
 
 /* ---------- game flow ---------- */
@@ -744,6 +783,7 @@ function show(id){for(const s of ['title','about','pause','done']) $('#'+s).hidd
 function updCount(){$('#beeNum').textContent=count;}
 function bumpCount(){const b=$('#beeBox');b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');}
 function updTurnBtn(){$('#turnBtn').classList.toggle('flip',hero&&hero.facing<0);}
+function buildLevelButtons(){const box=$('#levels');for(let i=1;i<=LAST;i++){const b=document.createElement('button');b.className='lvl';b.dataset.l=i;b.textContent=i;b.setAttribute('aria-label','Bane '+i);b.addEventListener('click',()=>{audioInit();runCounts=new Array(LAST).fill(null);startLevel(i);});box.appendChild(b);}}
 function refreshLevels(){$$('.lvl').forEach(b=>b.classList.toggle('done',!!save.done[+b.dataset.l-1]));}
 let wl=null;
 async function keepAwake(on){try{if(on&&'wakeLock' in navigator&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null;});}if(!on&&wl){await wl.release();wl=null;}}catch(e){}}
@@ -752,8 +792,8 @@ function startLevel(n){
   level=n; const D=LEVELS[n-1]; L=D.len; hiveX=L-180;
   hero={x:120,h:0,vy:0,ground:true,facing:1,walk:0,spread:0,inv:0,kb:0,stun:0,buffer:0,started:false};
   bees=D.bees.map((b,i)=>({x:b[0],h:b[1],type:b[2],ph:i*1.7,alive:true,seed:100+i*13}));
-  enemies=D.enemies.map((e,i)=>({type:e[0],x:e[1],min:e[1]-e[2],max:e[1]+e[2],dir:-1,speed:e[0]==='bug'?48:58,state:'walk',t:0,walk:i,seed:300+i*17}));
-  talls=D.talls.map((x,i)=>({x,state:'stand',t:0,dir:1,ang:0,thud:false,seed:500+i*19}));
+  enemies=D.enemies.map((e,i)=>({type:e[0],x:e[1],min:e[1]-e[2],max:e[1]+e[2],dir:-1,speed:(e[0]==='bug'?44:52)+n*1.8,state:'walk',t:0,walk:i,seed:300+i*17}));
+  talls=D.talls.map((x,i)=>({x,state:'stand',t:0,dir:1,ang:0,thud:false,said:false,seed:500+i*19}));
   tricks=D.tricks.map((x,i)=>({x,bx:x,h:100,ph:i*2.1,state:'hover',vx:0,vh:0,carry:false,seed:700+i*23}));
   parts=[]; flyers=[]; orbit=[]; count=0; camX=0; levelT=0; shake=0; finT=0; doneShown=false; home={n:0,sent:0,arrived:0};
   genScen(n); updCount(); updTurnBtn();
@@ -790,21 +830,21 @@ function steal(tr){
 }
 function beginFinish(){
   mode='finish'; finT=0; hero.facing=1; updTurnBtn(); $('#turnBtn').hidden=true; $('#pauseBtn').hidden=true;
-  home={n:count,sent:0,arrived:0}; runCounts[level-1]=count;
+  home={n:count,sent:0,arrived:0}; runCounts[level-1]={x:count,y:LEVELS[level-1].total};
 }
 function showDone(){
   if(doneShown) return; doneShown=true; mode='done'; sfx('win');
   save.done[level-1]=true; persist();
-  const bi=n=>n===1?'bi':'bier';
-  const last=level===3;
+  const bi=n=>n===1?'bi':'bier', last=level===LAST, tot=LEVELS[level-1].total;
   $('#doneTitle').textContent=last?'Du nåede Eiffeltårnet!':`Bane ${level} klaret!`;
-  let txt=count===0?'Du nåede bikuben! Prøv at redde nogle bier næste gang.':`Du reddede ${count} ${bi(count)}!`;
-  if(last&&runCounts.every(v=>v!==null)){const tot=runCounts.reduce((a,b)=>a+b,0);txt+=` I alt reddede du ${tot} ${bi(tot)} på de tre baner.`;}
+  $('#doneScore').innerHTML=`<b>${count}</b> ud af <b>${tot}</b> ${bi(tot)}`;
+  let txt='';
+  if(last&&runCounts.every(v=>v)){const X=runCounts.reduce((a,v)=>a+v.x,0),Y=runCounts.reduce((a,v)=>a+v.y,0);txt=`Alle ${LAST} baner: ${X} ud af ${Y} bier reddet!`;}
+  else if(count===tot&&tot>0) txt='Alle bierne er reddet!';
+  else if(count===0) txt='Prøv at redde nogle bier næste gang.';
   $('#doneText').textContent=txt;
   const row=$('#doneBees'); row.textContent='';
-  const shown=Math.min(count,24);
-  for(let i=0;i<shown;i++){const im=new Image();im.src=i%2?ICON.heart:ICON.sq;im.alt='';row.appendChild(im);}
-  if(count>shown){const m=document.createElement('span');m.className='more';m.textContent='+'+(count-shown);row.appendChild(m);}
+  if(tot<=48){for(let i=0;i<tot;i++){const im=new Image();im.src=i%2?ICON.heart:ICON.sq;im.alt='';if(i>=count)im.className='miss';row.appendChild(im);}}
   $('#nextBtn').hidden=last; $('#againBtn').textContent=last?'Spil igen fra bane 1':'Spil banen igen';
   show('done');
 }
@@ -843,14 +883,15 @@ function update(dt){
     }else if(e.state==='squash'){e.t+=dt;if(e.t>.32){e.state='gone';burst('star',e.x,40,7);release(e.x,e.type==='bug'?60:80);}}
   }
   for(const t of talls){
+    if(t.state==='stand'&&!t.said&&mode==='play'){const sp=t.x-camX;if(sp<viewW-30&&sp>-30){t.said=true;sfx('ohoh');}}
     if(t.state==='stand'){if(mode==='play'&&Math.abs(h.x-(t.x-6))<44&&h.h<190){t.state='fall';t.t=0;t.dir=h.facing;sfx('push');}}
     else if(t.state==='fall'){t.t+=dt;const k=Math.min(1,t.t/.65);t.ang=t.dir*Math.PI/2*k*k;
       if(t.t>=.65&&!t.thud){t.thud=true;sfx('thud');shake=.3;burst('star',t.x+t.dir*150,20,10);}
       if(t.t>1.05){t.state='gone';burst('star',t.x+t.dir*200,30,8);release(t.x+t.dir*200,70);}}
   }
   for(const tr of tricks){
-    if(tr.state==='hover'){tr.ph+=dt*2.2;tr.h=30+(1+Math.sin(tr.ph))/2*170;tr.x=tr.bx+Math.sin(tr.ph*.5)*30;
-      if(mode==='play'&&Math.abs(tr.x-h.x)<38&&tr.h+18>h.h&&tr.h-18<h.h+115) steal(tr);}
+    if(tr.state==='hover'){tr.ph+=dt*1.6;tr.h=60+Math.pow((1+Math.sin(tr.ph))/2,.7)*150;tr.x=tr.bx+Math.sin(tr.ph*.5)*24;
+      if(mode==='play'&&Math.abs(tr.x-h.x)<30&&tr.h+14>h.h&&tr.h-14<h.h+108) steal(tr);}
     else if(tr.state==='flee'){tr.x+=tr.vx*dt;tr.h+=tr.vh*dt;tr.vh+=60*dt;if(tr.h>viewH+120)tr.state='gone';}
   }
   for(const p of parts){p.t+=dt;p.x+=p.vx*dt;p.h+=p.vh*dt;if(p.k==='star'){p.vx*=Math.exp(-dt*4);p.vh*=Math.exp(-dt*4);}}
@@ -871,7 +912,7 @@ function update(dt){
     finT+=dt;
     while(home.sent<home.n&&finT>.6+home.sent*.22){flyers.push({k:'toH',x0:cview.x,y0:cview.y,t:0,dur:.75,type:home.sent%2?'h':'s'});home.sent++;}
     if(mode==='finish'&&home.arrived>=home.n&&finT>.6+home.n*.22+.9) showDone();
-    if(mode==='done'&&Math.random()<dt*(level===3?7:3)) burst('heart',h.x+(Math.random()-.5)*120,110+Math.random()*60,1);
+    if(mode==='done'&&Math.random()<dt*(level===LAST?7:3)) burst('heart',h.x+(Math.random()-.5)*120,110+Math.random()*60,1);
   }
   const tgt=h.x-viewW*(h.facing>0?.33:.67);
   camX+=(tgt-camX)*Math.min(1,dt*2.6); camX=clamp(camX,0,Math.max(0,L-viewW));
@@ -893,7 +934,7 @@ function draw(){
   ctx.save(); ctx.translate(sx,0);
   if(scen.lawn){ctx.fillStyle='#b4dc92';ctx.fillRect(-20,horizonY-10,viewW+40,groundY-horizonY+10);}
   // tower
-  const rng=mode==='title'?[.08,.08]:TOWER_C[level-1], pc=clamp(camX/Math.max(1,L-viewW),0,1), c=lerp(rng[0],rng[1],pc);
+  const rng=mode==='title'?[.04,.04]:towerRange(level), pc=clamp(camX/Math.max(1,L-viewW),0,1), c=lerp(rng[0],rng[1],pc);
   const th=lerp(260,groundY-50,Math.pow(c,1.15)), by=lerp(horizonY+10,groundY-14,Math.pow(c,1.6)), tx=lerp(viewW*.74,viewW-180,c*c), tw=th*330/640;
   ctx.globalAlpha=lerp(.72,1,c); ctx.drawImage(TOWER,tx-tw/2,by-th,tw,th); ctx.globalAlpha=1;
   // far skyline
@@ -984,15 +1025,14 @@ $('#turnBtn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropag
 $('#turnBtn').addEventListener('click',e=>e.preventDefault());
 $('#pauseBtn').addEventListener('click',()=>{audioInit();pause();});
 $('#sndBtn').addEventListener('click',()=>{audioInit();SND.on=!SND.on;save.sound=SND.on;persist();$('#sndBtn').classList.toggle('muted',!SND.on);});
-$('#playBtn').addEventListener('click',()=>{audioInit();runCounts=[null,null,null];startLevel(1);});
-$$('.lvl').forEach(b=>b.addEventListener('click',()=>{audioInit();runCounts=[null,null,null];startLevel(+b.dataset.l);}));
+$('#playBtn').addEventListener('click',()=>{audioInit();runCounts=new Array(LAST).fill(null);startLevel(1);});
 $('#aboutBtn').addEventListener('click',()=>{show('about');$('#about').scrollTop=0;requestAnimationFrame(renderCast);});
 $$('.backBtn').forEach(b=>b.addEventListener('click',()=>{show('title');requestAnimationFrame(resize);}));
 $('#resumeBtn').addEventListener('click',resume);
 $('#restartBtn').addEventListener('click',()=>startLevel(level));
 $$('.homeBtn').forEach(b=>b.addEventListener('click',toTitle));
-$('#nextBtn').addEventListener('click',()=>startLevel(Math.min(3,level+1)));
-$('#againBtn').addEventListener('click',()=>{if(level===3&&$('#againBtn').textContent.includes('fra bane 1')){runCounts=[null,null,null];startLevel(1);}else startLevel(level);});
+$('#nextBtn').addEventListener('click',()=>startLevel(Math.min(LAST,level+1)));
+$('#againBtn').addEventListener('click',()=>{if(level===LAST){runCounts=new Array(LAST).fill(null);startLevel(1);}else startLevel(level);});
 addEventListener('keydown',e=>{
   audioInit(); if(MUS.on&&mode!=='pause') musicStart();
   if(mode==='pause'&&(e.key==='Escape'||e.key==='p')){resume();return;}
@@ -1014,7 +1054,7 @@ addEventListener('pageshow',()=>setTimeout(resize,50));
 /* ---------- boot ---------- */
 const ICON={};
 function boot(){
-  TOWER=buildTower();
+  TOWER=buildTower(); buildLevelButtons();
   ICON.sq=iconURL('sq',96); ICON.heart=iconURL('heart',96);
   $('#beeIcon').src=ICON.sq; $('#progHive').src=iconURL('hive',84); $('#progGirl').src=iconURL('hero',96);
   $('#sndBtn').classList.toggle('muted',!SND.on); $$('.musBtn').forEach(b=>b.classList.toggle('muted',!MUS.on));
