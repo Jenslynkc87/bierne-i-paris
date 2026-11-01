@@ -1,0 +1,14 @@
+{
+  "name": "Bierne i Paris",
+  "short_name": "Bierne i Paris",
+  "lang": "da",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#bfe5f6",
+  "theme_color": "#8ecfee",
+  "icons": [
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
