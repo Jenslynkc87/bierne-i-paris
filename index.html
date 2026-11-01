@@ -189,6 +189,7 @@ button{font:inherit;color:var(--ink);}
           <span><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#2b2230" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Pilen: vend om</span>
         </div>
         <button id="aboutBtn" class="btn aboutlink">Om spillet</button>
+        <a id="otherLink" class="btn aboutlink" href="3d/" hidden style="text-decoration:none;display:inline-block;margin-left:8px">Prøv 3D-udgaven</a>
         <div><p id="rotHint" hidden>Drej iPaden om på siden, så bliver billedet større.</p></div>
       </div>
     </div>
@@ -1063,7 +1064,7 @@ function boot(){
 }
 boot();
 /* on the GitHub copy: look for a newer upload whenever the game is opened, and switch to it between games */
-const BUILD='202611012133';
+const BUILD='202611012201';
 let pendingUpdate=null;
 function applyUpdate(){if(pendingUpdate&&(mode==='title'||mode==='done'))location.replace('./?v='+pendingUpdate);}
 function checkUpdate(){
@@ -1071,6 +1072,7 @@ function checkUpdate(){
   fetch('./version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(v&&v.build&&v.build!==BUILD){pendingUpdate=v.build;applyUpdate();}}).catch(()=>{});
 }
 checkUpdate();
+if(/\.github\.io$/.test(location.hostname)) $('#otherLink').hidden=false;
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate();});
 $$('.homeBtn').forEach(b=>b.addEventListener('click',()=>setTimeout(applyUpdate,50)));
 if(document.fonts&&document.fonts.load){
