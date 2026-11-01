@@ -625,6 +625,11 @@ function audioInit(){
   if(SND.ac){if(SND.ac.state==='suspended')SND.ac.resume().catch(()=>{});return;}
   try{const A=window.AudioContext||window.webkitAudioContext;SND.ac=new A();SND.m=SND.ac.createGain();SND.m.gain.value=.6;SND.m.connect(SND.ac.destination);}catch(e){SND.ac=null;}
 }
+function unlockAudio(){ // iOS only plays Web Audio after a sound is started inside a real tap (touchend/click)
+  audioInit(); const a=SND.ac; if(!a) return;
+  try{const b=a.createBuffer(1,1,22050),src=a.createBufferSource();src.buffer=b;src.connect(a.destination);src.start(0);}catch(e){}
+  if(a.state!=='running') a.resume().catch(()=>{});
+}
 function tone(f,d,type='triangle',v=.15,f2=null,delay=0){
   const a=SND.ac; if(!a||!SND.on) return;
   const t=a.currentTime+delay, o=a.createOscillator(), g=a.createGain();
@@ -693,6 +698,7 @@ function musicTick(){
 }
 function musicStart(){
   if(!SND.ac||!MUS.on||MUS.playing) return;
+  if(SND.ac.state!=='running'){SND.ac.resume().then(()=>{if(MUS.on&&mode!=='pause')musicStart();}).catch(()=>{});return;}
   const now=SND.ac.currentTime; MUS.g=SND.ac.createGain(); MUS.g.gain.setValueAtTime(0,now); MUS.g.gain.linearRampToValueAtTime(.55,now+.5); MUS.g.connect(SND.m);
   MUS.playing=true; MUS.next=now+.08; musicTick(); MUS.timer=setInterval(musicTick,80);
 }
@@ -701,7 +707,7 @@ function musicStop(){
   const g=MUS.g; MUS.g=null;
   if(g&&SND.ac){const now=SND.ac.currentTime;g.gain.cancelScheduledValues(now);g.gain.setValueAtTime(g.gain.value,now);g.gain.linearRampToValueAtTime(0,now+.15);setTimeout(()=>{try{g.disconnect();}catch(e){}},300);}
 }
-function setMusic(on){MUS.on=on;save.music=on;persist();$$('.musBtn').forEach(b=>b.classList.toggle('muted',!on));if(on){audioInit();musicStart();}else musicStop();}
+function setMusic(on){MUS.on=on;save.music=on;persist();$$('.musBtn').forEach(b=>b.classList.toggle('muted',!on));if(on){unlockAudio();musicStart();}else musicStop();}
 
 /* ---------- layout ---------- */
 const thc=$('#titleHero');
@@ -998,7 +1004,7 @@ addEventListener('keydown',e=>{
 });
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();musicStop();}else{if(mode==='play'||mode==='finish'||mode==='done')keepAwake(true);if(mode!=='pause')musicStart();}});
 $$('.musBtn').forEach(b=>b.addEventListener('click',()=>setMusic(!MUS.on)));
-for(const ev of ['pointerdown','pointerup']) document.addEventListener(ev,()=>{audioInit();if(MUS.on&&mode!=='pause')musicStart();},true);
+for(const ev of ['touchend','pointerup','click','keydown']) document.addEventListener(ev,()=>{unlockAudio();if(MUS.on&&mode!=='pause')musicStart();},true);
 document.addEventListener('gesturestart',e=>e.preventDefault());
 addEventListener('resize',resize);
 
