@@ -30,7 +30,7 @@
   color-scheme:light;
 }
 [hidden]{display:none!important;}
-html,body{height:100%;margin:0;overflow:hidden;background:var(--sky);color:var(--ink);}
+html,body{height:100%;margin:0;overflow:hidden;background:#ebe3d4;color:var(--ink);}
 body{font-family:var(--hand);font-size:18px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;}
 #app{position:fixed;inset:0;overflow:hidden;background:var(--sky);}
 #game{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
@@ -712,7 +712,7 @@ function setMusic(on){MUS.on=on;save.music=on;persist();$$('.musBtn').forEach(b=
 /* ---------- layout ---------- */
 const thc=$('#titleHero');
 function resize(){
-  W=window.innerWidth; H=window.innerHeight; dpr=Math.min(window.devicePixelRatio||1,2);
+  const app=$('#app'); W=app.clientWidth||window.innerWidth; H=app.clientHeight||window.innerHeight; dpr=Math.min(window.devicePixelRatio||1,2);
   cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
   S=Math.min(H/600,W/900); viewW=W/S; viewH=H/S; groundY=viewH-95; horizonY=groundY-125;
   const r=thc.getBoundingClientRect(); titleHX=r.width>0?(r.left+r.width/2)/S:viewW*.5;
@@ -1007,6 +1007,9 @@ $$('.musBtn').forEach(b=>b.addEventListener('click',()=>setMusic(!MUS.on)));
 for(const ev of ['touchend','pointerup','click','keydown']) document.addEventListener(ev,()=>{unlockAudio();if(MUS.on&&mode!=='pause')musicStart();},true);
 document.addEventListener('gesturestart',e=>e.preventDefault());
 addEventListener('resize',resize);
+if(window.visualViewport) visualViewport.addEventListener('resize',resize);
+addEventListener('orientationchange',()=>setTimeout(resize,300));
+addEventListener('pageshow',()=>setTimeout(resize,50));
 
 /* ---------- boot ---------- */
 const ICON={};
