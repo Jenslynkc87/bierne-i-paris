@@ -1062,6 +1062,17 @@ function boot(){
   requestAnimationFrame(t=>{last=t;requestAnimationFrame(frame);});
 }
 boot();
+/* on the GitHub copy: look for a newer upload whenever the game is opened, and switch to it between games */
+const BUILD='202611012133';
+let pendingUpdate=null;
+function applyUpdate(){if(pendingUpdate&&(mode==='title'||mode==='done'))location.replace('./?v='+pendingUpdate);}
+function checkUpdate(){
+  if(!/\.github\.io$/.test(location.hostname)) return;
+  fetch('./version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(v&&v.build&&v.build!==BUILD){pendingUpdate=v.build;applyUpdate();}}).catch(()=>{});
+}
+checkUpdate();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate();});
+$$('.homeBtn').forEach(b=>b.addEventListener('click',()=>setTimeout(applyUpdate,50)));
 if(document.fonts&&document.fonts.load){
   Promise.all([document.fonts.load('800 13px Sniglet'),document.fonts.load('20px "Patrick Hand"')]).then(()=>{if(scen)scen.near.forEach(b=>{b.cache=null;});resize();}).catch(()=>{});
 }
